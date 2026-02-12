@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimeStream - Watch Anime for Free</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">Anime<span class="text-white">Stream</span></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="index.html">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#ongoing">Ongoing</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#completed">Completed</a>
+                    </li>
+                </ul>
+                <form class="d-flex" id="searchForm">
+                    <div class="input-group">
+                        <input class="form-control" type="search" placeholder="Search anime..." aria-label="Search"
+                            id="searchInput">
+                        <button class="btn btn-search" type="submit">Search</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container py-5">
+
+        <!-- Hero Section (Optional, could be a carousel later) -->
+        <div class="p-5 mb-4 bg-dark-elem rounded-3 text-center">
+            <div class="container-fluid py-3">
+                <h1 class="display-5 fw-bold text-white">Welcome to AnimeStream</h1>
+                <p class="col-md-8 fs-4 mx-auto">Watch your favorite anime series online for free. Updated
+                    daily with the latest episodes.</p>
+                <a href="#ongoing" class="btn btn-primary btn-lg" style="background-color: #ff0055; border: none;">Start
+                    Watching</a>
+            </div>
+        </div>
+
+        <!-- Continue Watching Section -->
+        <section id="history-section" class="mb-5" style="display: none;">
+            <h2 class="mb-4 text-accent border-bottom border-secondary pb-2 d-inline-block">Lanjut Nonton</h2>
+            <div class="row" id="history-list">
+                <!-- Javascript will populate this -->
+            </div>
+        </section>
+
+        <!-- Ongoing Anime Section -->
+        <section id="ongoing" class="mb-5">
+            <h2 class="mb-4 text-accent border-bottom border-secondary pb-2 d-inline-block">Ongoing Anime</h2>
+            <div class="row" id="ongoing-list">
+                <!-- Javascript will populate this -->
+                <div class="col-12 spinner-container">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Completed Anime Section -->
+        <section id="completed" class="mb-5">
+            <h2 class="mb-4 text-accent border-bottom border-secondary pb-2 d-inline-block">Completed Anime</h2>
+            <div class="row" id="completed-list">
+                <!-- Javascript will populate this -->
+                <div class="col-12 spinner-container">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 AnimeStream. This is a fan project correctly using Otakudesu API.</p>
+            <p class="small text-muted">Disclaimer: We do not host any files on our server.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- App Logic -->
+    <script src="js/app.js"></script>
+</body>
+
+</html>
