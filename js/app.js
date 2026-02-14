@@ -4,7 +4,13 @@ const API_BASE_URL = 'https://api.otakudesu.natee.my.id/api';
 function getProxyUrl(url) {
     if (!url) return 'img/placeholder.jpg';
     if (url.startsWith('/')) return url; // Local images
-    // Use Vercel serverless function proxy
+
+    // Rewrite otakudesu.best images to /gambar/ path
+    if (url.includes('otakudesu.best')) {
+        return '/gambar/' + url.replace(/^https?:\/\/otakudesu\.best\//, '');
+    }
+
+    // Use Vercel serverless function proxy for other domains
     return `/api/proxy?url=${encodeURIComponent(url)}`;
 }
 
