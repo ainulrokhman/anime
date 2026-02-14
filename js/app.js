@@ -122,6 +122,24 @@ const SEOHelper = {
             const metaKw = document.querySelector('meta[name="keywords"]');
             if (metaKw) metaKw.setAttribute('content', data.keywords);
         }
+
+        if (data.url) {
+            SEOHelper.updateCanonical(data.url);
+        }
+    },
+
+    updateCanonical: (url) => {
+        let link = document.querySelector('link[rel="canonical"]');
+        if (!link) {
+            link = document.createElement('link');
+            link.rel = 'canonical';
+            document.head.appendChild(link);
+        }
+        link.href = url;
+
+        // Also update og:url
+        const ogUrl = document.querySelector('meta[property="og:url"]');
+        if (ogUrl) ogUrl.setAttribute('content', url);
     },
 
     updateSchema: (type, data) => {
@@ -432,7 +450,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             SEOHelper.updateMeta({
                 title: `Pencarian: ${query} - AneNyong`,
                 description: `Hasil pencarian anime untuk kata kunci ${query} di AneNyong. Nonton anime gratis subtitle Indonesia.`,
-                keywords: `cari anime ${query}, nonton anime ${query}, download ${query} sub indo`
+                keywords: `cari anime ${query}, nonton anime ${query}, download ${query} sub indo`,
+                url: `https://anenyong.vercel.app/search.html?q=${encodeURIComponent(query)}`
             });
 
             showLoading('search-results');
@@ -458,7 +477,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     title: `${data.title} Sub Indo - AneNyong`,
                     description: `Nonton ${data.title} Subtitle Indonesia. ${cleanSynopsis}... Genre: ${genres}. Studio: ${data.studio}. Rating: ${data.rating}.`,
                     image: data.poster,
-                    keywords: `nonton ${data.title}, download ${data.title}, streaming ${data.title} sub indo, ${data.title} batch, anime ${genres}`
+                    keywords: `nonton ${data.title}, download ${data.title}, streaming ${data.title} sub indo, ${data.title} batch, anime ${genres}`,
+                    url: `https://anenyong.vercel.app/anime.html?slug=${slug}`
                 });
 
                 SEOHelper.updateSchema('TVSeries', {
@@ -589,7 +609,8 @@ async function loadEpisode(slug, pushState = true) {
         title: `Nonton ${data.episode} Sub Indo - AneNyong`,
         description: `Streaming ${data.episode} subtitle Indonesia. Nonton ${animeTitle} dengan kualitas terbaik.`,
         image: poster,
-        keywords: `nonton ${data.episode}, streaming ${animeTitle}, download ${data.episode}, video ${animeTitle}`
+        keywords: `nonton ${data.episode}, streaming ${animeTitle}, download ${data.episode}, video ${animeTitle}`,
+        url: `https://anenyong.vercel.app/stream.html?slug=${slug}`
     });
 
     SEOHelper.updateSchema('Episode', {
