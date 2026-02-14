@@ -451,7 +451,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 title: `Pencarian: ${query} - AneNyong`,
                 description: `Hasil pencarian anime untuk kata kunci ${query} di AneNyong. Nonton anime gratis subtitle Indonesia.`,
                 keywords: `cari anime ${query}, nonton anime ${query}, download ${query} sub indo`,
-                url: `https://anenyong.vercel.app/search.html?q=${encodeURIComponent(query)}`
+                url: `${window.location.origin}/search.html?q=${encodeURIComponent(query)}`
             });
 
             showLoading('search-results');
@@ -478,7 +478,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     description: `Nonton ${data.title} Subtitle Indonesia. ${cleanSynopsis}... Genre: ${genres}. Studio: ${data.studio}. Rating: ${data.rating}.`,
                     image: data.poster,
                     keywords: `nonton ${data.title}, download ${data.title}, streaming ${data.title} sub indo, ${data.title} batch, anime ${genres}`,
-                    url: `https://anenyong.vercel.app/anime.html?slug=${slug}`
+                    url: `${window.location.origin}/anime.html?slug=${slug}`
                 });
 
                 SEOHelper.updateSchema('TVSeries', {
@@ -610,7 +610,7 @@ async function loadEpisode(slug, pushState = true) {
         description: `Streaming ${data.episode} subtitle Indonesia. Nonton ${animeTitle} dengan kualitas terbaik.`,
         image: poster,
         keywords: `nonton ${data.episode}, streaming ${animeTitle}, download ${data.episode}, video ${animeTitle}`,
-        url: `https://anenyong.vercel.app/stream.html?slug=${slug}`
+        url: `${window.location.origin}/stream.html?slug=${slug}`
     });
 
     SEOHelper.updateSchema('Episode', {

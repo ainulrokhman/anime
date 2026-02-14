@@ -1,0 +1,12 @@
+{
+    "rewrites": [
+        {
+            "source": "/gambar/:path*",
+            "destination": "/api/proxy?url=https://otakudesu.best/:path*"
+        },
+        {
+            "source": "/robots.txt",
+            "destination": "/api/robots"
+        }
+    ]
+}
