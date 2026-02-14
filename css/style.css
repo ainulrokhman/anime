@@ -280,6 +280,10 @@ footer {
     color: #ff0055;
 }
 
+.text-muted {
+    color: rgba(255, 255, 255, 0.55) !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .detail-poster {

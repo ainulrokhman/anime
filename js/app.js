@@ -65,6 +65,95 @@ const HistoryManager = {
     }
 };
 
+const TranslationHelper = {
+    translateStatus: (status) => {
+        if (!status) return '';
+        const lower = status.toLowerCase();
+        if (lower === 'ongoing') return 'On-Going';
+        if (lower === 'completed') return 'Tamat';
+        return status;
+    },
+    translateDay: (day) => {
+        if (!day) return '';
+        const days = {
+            'Sunday': 'Minggu', 'Monday': 'Senin', 'Tuesday': 'Selasa', 'Wednesday': 'Rabu',
+            'Thursday': 'Kamis', 'Friday': 'Jumat', 'Saturday': 'Sabtu'
+        };
+        return days[day] || day;
+    }
+};
+
+const SEOHelper = {
+    updateMeta: (data) => {
+        if (data.title) {
+            document.title = data.title;
+            const ogTitle = document.querySelector('meta[property="og:title"]');
+            if (ogTitle) ogTitle.setAttribute('content', data.title);
+            const twTitle = document.querySelector('meta[property="twitter:title"]');
+            if (twTitle) twTitle.setAttribute('content', data.title);
+        }
+
+        if (data.description) {
+            const metaDesc = document.querySelector('meta[name="description"]');
+            if (metaDesc) metaDesc.setAttribute('content', data.description);
+            const ogDesc = document.querySelector('meta[property="og:description"]');
+            if (ogDesc) ogDesc.setAttribute('content', data.description);
+            const twDesc = document.querySelector('meta[property="twitter:description"]');
+            if (twDesc) twDesc.setAttribute('content', data.description);
+        }
+
+        if (data.image) {
+            const ogImage = document.querySelector('meta[property="og:image"]');
+            if (ogImage) ogImage.setAttribute('content', data.image);
+            const twImage = document.querySelector('meta[property="twitter:image"]');
+            if (twImage) twImage.setAttribute('content', data.image);
+        }
+
+        if (data.keywords) {
+            const metaKw = document.querySelector('meta[name="keywords"]');
+            if (metaKw) metaKw.setAttribute('content', data.keywords);
+        }
+    },
+
+    updateSchema: (type, data) => {
+        let schemaData = {};
+
+        if (type === 'TVSeries') {
+            schemaData = {
+                "@context": "https://schema.org",
+                "@type": "TVSeries",
+                "name": data.title,
+                "description": data.synopsis,
+                "image": data.poster,
+                "numberOfEpisodes": data.episode_count,
+                "genre": data.genres ? data.genres.map(g => g.name) : []
+            };
+        } else if (type === 'Episode') {
+            schemaData = {
+                "@context": "https://schema.org",
+                "@type": "TVEpisode",
+                "name": data.episode_title,
+                "partOfSeries": {
+                    "@type": "TVSeries",
+                    "name": data.anime_title
+                },
+                "episodeNumber": data.episode_number,
+                "image": data.poster
+            };
+        }
+
+        // Remove existing JSON-LD
+        const existingScript = document.querySelector('script[type="application/ld+json"]');
+        if (existingScript) existingScript.remove();
+
+        // Add new JSON-LD
+        const script = document.createElement('script');
+        script.type = 'application/ld+json';
+        script.text = JSON.stringify(schemaData);
+        document.head.appendChild(script);
+    }
+};
+
 // --- API Functions ---
 
 async function fetchHomeData() {
@@ -148,7 +237,7 @@ function createAnimeCard(anime) {
         slug = extractSlug(slug);
     }
 
-    const episodeText = anime.current_episode || (anime.episode_count ? `${anime.episode_count} Eps` : '') || anime.status || '';
+    const episodeText = anime.current_episode || (anime.episode_count ? `${anime.episode_count} Eps` : '') || TranslationHelper.translateStatus(anime.status) || '';
 
     // Fix poster URL if needed (sometimes http/https issues)
     const poster = anime.poster || 'img/placeholder.jpg';
@@ -163,7 +252,7 @@ function createAnimeCard(anime) {
                     </div>
                     <div class="card-body">
                         <h5 class="card-title" title="${anime.title}">${anime.title}</h5>
-                        <p class="card-text text-muted small">${anime.release_day || anime.rating || ''}</p>
+                        <p class="card-text text-muted small">${TranslationHelper.translateDay(anime.release_day) || anime.rating || ''}</p>
                     </div>
                 </div>
             </a>
@@ -176,7 +265,7 @@ function renderAnimeList(containerId, animeList) {
     if (!container) return;
 
     if (!animeList || animeList.length === 0) {
-        container.innerHTML = '<div class="col-12 text-center text-muted">No anime found</div>';
+        container.innerHTML = '<div class="col-12 text-center text-muted">Anime tidak ditemukan</div>';
         return;
     }
 
@@ -199,7 +288,7 @@ function showLoading(containerId) {
 
 function renderEpisodesWithBatching(container, episodes) {
     if (!episodes || episodes.length === 0) {
-        container.innerHTML = '<div class="text-center py-3 text-muted">No episodes found</div>';
+        container.innerHTML = '<div class="text-center py-3 text-muted">Episode tidak ditemukan</div>';
         return;
     }
 
@@ -223,7 +312,7 @@ function renderEpisodesWithBatching(container, episodes) {
             const end = Math.min(start + BATCH_SIZE, episodes.length);
             const option = document.createElement('option');
             option.value = i;
-            option.text = `Episodes ${start + 1} - ${end}`;
+            option.text = `Episode ${start + 1} - ${end}`;
             select.appendChild(option);
         }
 
@@ -268,16 +357,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const page = path.split('/').pop();
 
     // Common: Search Bar Listener everywhere if present
-    const searchForm = document.getElementById('searchForm');
-    if (searchForm) {
-        searchForm.addEventListener('submit', (e) => {
+    // Common: Search Bar Listener everywhere if present (Delegation for Dynamic Content)
+    document.addEventListener('submit', (e) => {
+        if (e.target && e.target.id === 'searchForm') {
             e.preventDefault();
             const query = document.getElementById('searchInput').value.trim();
             if (query) {
                 window.location.href = `search.html?q=${encodeURIComponent(query)}`;
             }
-        });
-    }
+        }
+    });
 
     // Home Page
     if (page === 'index.html' || page === '') {
@@ -317,7 +406,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderAnimeList('ongoing-list', data.ongoing_anime);
             renderAnimeList('completed-list', data.complete_anime);
         } else {
-            document.getElementById('ongoing-list').innerHTML = '<div class="col-12 text-center text-danger">Failed to load data. API might be down.</div>';
+            document.getElementById('ongoing-list').innerHTML = '<div class="col-12 text-center text-danger">Gagal memuat data. API mungkin sedang gangguan.</div>';
             document.getElementById('completed-list').innerHTML = '';
         }
     }
@@ -328,9 +417,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const query = urlParams.get('q');
 
         if (query) {
-            document.getElementById('search-query').textContent = `Search Results for: "${query}"`;
-            showLoading('search-results');
+            document.getElementById('search-query').textContent = `Hasil Pencarian untuk: "${query}"`;
 
+            // Update SEO for Search
+            SEOHelper.updateMeta({
+                title: `Pencarian: ${query} - AneNyong`,
+                description: `Hasil pencarian anime untuk kata kunci ${query} di AneNyong. Nonton anime gratis subtitle Indonesia.`,
+                keywords: `cari anime ${query}, nonton anime ${query}, download ${query} sub indo`
+            });
+
+            showLoading('search-results');
             const results = await fetchSearchData(query);
             renderAnimeList('search-results', results);
         }
@@ -344,6 +440,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (slug) {
             const data = await fetchAnimeDetail(slug);
             if (data) {
+                // SEO Update
+                SEOHelper.updateMeta({
+                    title: `${data.title} Sub Indo - AneNyong`,
+                    description: `Nonton dan download anime ${data.title} subtitle Indonesia legal dan gratis. ${data.synopsis.substring(0, 150)}...`,
+                    image: data.poster,
+                    keywords: `nonton ${data.title}, download ${data.title}, streaming ${data.title} sub indo, ${data.title} batch`
+                });
+
+                SEOHelper.updateSchema('TVSeries', {
+                    title: data.title,
+                    synopsis: data.synopsis,
+                    poster: data.poster,
+                    episode_count: data.episode_count,
+                    genres: data.genres
+                });
+
                 // Set Context for Watch History
                 HistoryManager.setContext({
                     slug: slug, // This is the clean slug from URL params
@@ -372,16 +484,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Info list
                 const infoList = document.getElementById('anime-info');
                 infoList.innerHTML = `
-                    <li><strong>Japanese:</strong> ${data.japanese_title}</li>
-                    <li><strong>Score:</strong> ${data.rating}</li>
-                    <li><strong>Producer:</strong> ${data.produser}</li>
-                    <li><strong>Type:</strong> ${data.type}</li>
-                    <li><strong>Status:</strong> ${data.status}</li>
-                    <li><strong>Episodes:</strong> ${data.episode_count}</li>
-                    <li><strong>Duration:</strong> ${data.duration}</li>
-                    <li><strong>Release Date:</strong> ${data.release_date}</li>
+                    <li><strong>Judul Jepang:</strong> ${data.japanese_title}</li>
+                    <li><strong>Skor:</strong> ${data.rating}</li>
+                    <li><strong>Produser:</strong> ${data.produser}</li>
+                    <li><strong>Tipe:</strong> ${data.type}</li>
+                    <li><strong>Status:</strong> ${TranslationHelper.translateStatus(data.status)}</li>
+                    <li><strong>Total Episode:</strong> ${data.episode_count}</li>
+                    <li><strong>Durasi:</strong> ${data.duration}</li>
+                    <li><strong>Tanggal Rilis:</strong> ${data.release_date}</li>
                     <li><strong>Studio:</strong> ${data.studio}</li>
-                    <li><strong>Genres:</strong> ${data.genres.map(g => g.name).join(', ')}</li>
+                    <li><strong>Genre:</strong> ${data.genres.map(g => g.name).join(', ')}</li>
                 `;
 
                 // Render Episodes
@@ -407,7 +519,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             // but simpler to just overwrite container content
                             episodeContainer.innerHTML = generateEpisodeHtml(filtered);
                             if (filtered.length === 0) {
-                                episodeContainer.innerHTML = '<div class="text-center py-3 text-muted">No episodes found</div>';
+                                episodeContainer.innerHTML = '<div class="text-center py-3 text-muted">Episode tidak ditemukan</div>';
                             }
                         } else {
                             // Restore batching view
@@ -451,10 +563,35 @@ async function loadEpisode(slug, pushState = true) {
     }
 
     document.getElementById('stream-title').textContent = data.episode;
-    document.title = `${data.episode} - AnimeStream`;
+
+    // SEO Update for Stream
+    // We need anime context for better SEO (Title, Poster). 
+    // HistoryManager might have it, or we rely on what we can get.
+    // For now, let's try to use what we have or generic if missing.
+    const context = HistoryManager.getContext();
+    const animeTitle = context ? context.title : 'Anime';
+    const poster = context ? context.poster : '';
+
+    SEOHelper.updateMeta({
+        title: `Nonton ${data.episode} Sub Indo - AneNyong`,
+        description: `Streaming ${data.episode} subtitle Indonesia gratis dengan resolusi terbaik. Nonton ${animeTitle} tanpa iklan mengganggu.`,
+        image: poster,
+        keywords: `nonton ${data.episode}, streaming ${animeTitle}, download ${data.episode}`
+    });
+
+    SEOHelper.updateSchema('Episode', {
+        episode_title: data.episode,
+        anime_title: animeTitle,
+        episode_number: data.episode.match(/\d+/)?.[0] || '',
+        poster: poster
+    });
+
+    // document.title is already handled by SEOHelper.updateMeta, but legacy code had it. 
+    // We can remove the explicit document.title assignment below or let it be overwritten by SEOHelper.
+    // document.title = `${data.episode} - AnimeStream`; // Removed in favor of SEOHelper
 
     // Save to History
-    const context = HistoryManager.getContext();
+    // const context = HistoryManager.getContext(); // Already declared above
     if (context) {
         // Extract episode number from title if possible, or use API data if reliable 
         // (API data for episode number usually exists as `episode_number` in list, here we might rely on regex from title or passed data?)
@@ -571,7 +708,7 @@ async function loadEpisode(slug, pushState = true) {
         if (data.download_urls && data.download_urls.mp4) {
             const res360 = data.download_urls.mp4.find(r => r.resolution.includes('360')) || data.download_urls.mp4[0];
             if (res360) {
-                downloadContainer.innerHTML = `<h6 class="mt-3">Download (360p):</h6>` +
+                downloadContainer.innerHTML = `<h6 class="mt-3">Unduh (360p):</h6>` +
                     res360.urls.map(u => `<a href="${u.url}" target="_blank" class="btn btn-sm btn-outline-secondary me-2 mb-2">${u.provider}</a>`).join('');
             }
         }
