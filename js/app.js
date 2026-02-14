@@ -1,5 +1,13 @@
 const API_BASE_URL = 'https://api.otakudesu.natee.my.id/api';
 
+// --- Proxy Helper ---
+function getProxyUrl(url) {
+    if (!url) return 'img/placeholder.jpg';
+    if (url.startsWith('/')) return url; // Local images
+    // Use Vercel serverless function proxy
+    return `/api/proxy?url=${encodeURIComponent(url)}`;
+}
+
 // --- History Manager ---
 
 const HistoryManager = {
@@ -89,7 +97,7 @@ const SEOHelper = {
             document.title = data.title;
             const ogTitle = document.querySelector('meta[property="og:title"]');
             if (ogTitle) ogTitle.setAttribute('content', data.title);
-            const twTitle = document.querySelector('meta[property="twitter:title"]');
+            const twTitle = document.querySelector('meta[name="twitter:title"]') || document.querySelector('meta[property="twitter:title"]');
             if (twTitle) twTitle.setAttribute('content', data.title);
         }
 
@@ -98,15 +106,16 @@ const SEOHelper = {
             if (metaDesc) metaDesc.setAttribute('content', data.description);
             const ogDesc = document.querySelector('meta[property="og:description"]');
             if (ogDesc) ogDesc.setAttribute('content', data.description);
-            const twDesc = document.querySelector('meta[property="twitter:description"]');
+            const twDesc = document.querySelector('meta[name="twitter:description"]') || document.querySelector('meta[property="twitter:description"]');
             if (twDesc) twDesc.setAttribute('content', data.description);
         }
 
         if (data.image) {
+            const proxyImage = getProxyUrl(data.image);
             const ogImage = document.querySelector('meta[property="og:image"]');
-            if (ogImage) ogImage.setAttribute('content', data.image);
-            const twImage = document.querySelector('meta[property="twitter:image"]');
-            if (twImage) twImage.setAttribute('content', data.image);
+            if (ogImage) ogImage.setAttribute('content', proxyImage);
+            const twImage = document.querySelector('meta[name="twitter:image"]') || document.querySelector('meta[property="twitter:image"]');
+            if (twImage) twImage.setAttribute('content', proxyImage);
         }
 
         if (data.keywords) {
@@ -124,7 +133,7 @@ const SEOHelper = {
                 "@type": "TVSeries",
                 "name": data.title,
                 "description": data.synopsis,
-                "image": data.poster,
+                "image": getProxyUrl(data.poster),
                 "numberOfEpisodes": data.episode_count,
                 "genre": data.genres ? data.genres.map(g => g.name) : []
             };
@@ -138,7 +147,7 @@ const SEOHelper = {
                     "name": data.anime_title
                 },
                 "episodeNumber": data.episode_number,
-                "image": data.poster
+                "image": getProxyUrl(data.poster)
             };
         }
 
@@ -240,7 +249,7 @@ function createAnimeCard(anime) {
     const episodeText = anime.current_episode || (anime.episode_count ? `${anime.episode_count} Eps` : '') || TranslationHelper.translateStatus(anime.status) || '';
 
     // Fix poster URL if needed (sometimes http/https issues)
-    const poster = anime.poster || 'img/placeholder.jpg';
+    const poster = getProxyUrl(anime.poster);
 
     return `
         <div class="col-6 col-md-4 col-lg-3 mb-4">
@@ -382,7 +391,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <a href="stream.html?slug=${h.episodeSlug}" class="text-decoration-none">
                         <div class="anime-card h-100 relative">
                             <div class="card-img-wrapper">
-                                <img src="${h.animePoster}" class="card-img-top" alt="${h.animeTitle}" loading="lazy">
+                                <img src="${getProxyUrl(h.animePoster)}" class="card-img-top" alt="${h.animeTitle}" loading="lazy">
                                 <span class="episode-badge">Ep ${h.episodeNumber}</span>
                                 <div class="play-overlay">
                                     <i class="bi bi-play-circle-fill"></i>
@@ -441,11 +450,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = await fetchAnimeDetail(slug);
             if (data) {
                 // SEO Update
+                // SEO Update
+                const genres = data.genres.map(g => g.name).join(', ');
+                const cleanSynopsis = data.synopsis.replace(/\n/g, ' ').substring(0, 160);
+
                 SEOHelper.updateMeta({
                     title: `${data.title} Sub Indo - AneNyong`,
-                    description: `Nonton dan download anime ${data.title} subtitle Indonesia legal dan gratis. ${data.synopsis.substring(0, 150)}...`,
+                    description: `Nonton ${data.title} Subtitle Indonesia. ${cleanSynopsis}... Genre: ${genres}. Studio: ${data.studio}. Rating: ${data.rating}.`,
                     image: data.poster,
-                    keywords: `nonton ${data.title}, download ${data.title}, streaming ${data.title} sub indo, ${data.title} batch`
+                    keywords: `nonton ${data.title}, download ${data.title}, streaming ${data.title} sub indo, ${data.title} batch, anime ${genres}`
                 });
 
                 SEOHelper.updateSchema('TVSeries', {
@@ -478,7 +491,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 // Render Details
                 document.getElementById('anime-title').textContent = data.title;
-                document.getElementById('anime-poster').src = data.poster;
+                document.getElementById('anime-poster').src = getProxyUrl(data.poster);
                 document.getElementById('anime-synopsis').innerHTML = data.synopsis.replace(/\n/g, '<br>'); // Synopsis might be plain text
 
                 // Info list
@@ -574,9 +587,9 @@ async function loadEpisode(slug, pushState = true) {
 
     SEOHelper.updateMeta({
         title: `Nonton ${data.episode} Sub Indo - AneNyong`,
-        description: `Streaming ${data.episode} subtitle Indonesia gratis dengan resolusi terbaik. Nonton ${animeTitle} tanpa iklan mengganggu.`,
+        description: `Streaming ${data.episode} subtitle Indonesia. Nonton ${animeTitle} dengan kualitas terbaik.`,
         image: poster,
-        keywords: `nonton ${data.episode}, streaming ${animeTitle}, download ${data.episode}`
+        keywords: `nonton ${data.episode}, streaming ${animeTitle}, download ${data.episode}, video ${animeTitle}`
     });
 
     SEOHelper.updateSchema('Episode', {
