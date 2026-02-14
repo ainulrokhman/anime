@@ -135,6 +135,11 @@ const SEOHelper = {
     },
 
     updateCanonical: (url) => {
+        // Ensure URL is absolute if it's relative
+        if (url.startsWith('/')) {
+            url = window.location.origin + url;
+        }
+
         let link = document.querySelector('link[rel="canonical"]');
         if (!link) {
             link = document.createElement('link');
@@ -143,9 +148,11 @@ const SEOHelper = {
         }
         link.href = url;
 
-        // Also update og:url
+        // Also update og:url and others
         const ogUrl = document.querySelector('meta[property="og:url"]');
         if (ogUrl) ogUrl.setAttribute('content', url);
+        const twUrl = document.querySelector('meta[property="twitter:url"]') || document.querySelector('meta[name="twitter:url"]');
+        if (twUrl) twUrl.setAttribute('content', url);
     },
 
     updateSchema: (type, data) => {
@@ -403,6 +410,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Home Page
     if (page === 'index.html' || page === '') {
+        // Initial SEO for Home
+        SEOHelper.updateMeta({
+            url: window.location.origin,
+            image: window.location.origin + '/img/og-image.jpg' // Ensure this exists or use a default
+        });
+
+        // Update Schema.org WebSite URL dynamically
+        const schemaScript = document.querySelector('script[type="application/ld+json"]');
+        if (schemaScript) {
+            try {
+                const schema = JSON.parse(schemaScript.text);
+                if (schema['@type'] === 'WebSite') {
+                    schema.url = window.location.origin + '/';
+                    schema.potentialAction.target = window.location.origin + '/search.html?q={search_term_string}';
+                    schemaScript.text = JSON.stringify(schema);
+                }
+            } catch (e) {
+                console.error("Error updating schema", e);
+            }
+        }
+
         // Render Watch History if available
         const history = HistoryManager.getAll();
         const historyList = document.getElementById('history-list'); // We need to add this to HTML
